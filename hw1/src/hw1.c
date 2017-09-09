@@ -68,9 +68,7 @@ int polybius(int argc, char **argv){
     int row = 0;
     int column = 0;
     extern const char* key;
-    char* k;
-    k = malloc(sizeof(char));
-    key = k;
+
 
 
 
@@ -119,11 +117,9 @@ int polybius(int argc, char **argv){
                 return 0;
             else{ //Key exists on cmd line
 
-                for (int i=0;*(*(argv+j+1)+i)!='\0';i++){
+                key = *((argv+j+1));
 
-                    *(k+i) = *(*(argv+j+1)+i);
 
-                }
 
                     printf("%s\n", key);
             }
@@ -162,9 +158,7 @@ int polybius(int argc, char **argv){
 int fmorse(int argc, char **argv){
 
     extern const char* key;
-    char* k;
-    k = malloc(sizeof(char));
-    key = k;
+
 
     if(argc>5)
         return 0;
@@ -180,11 +174,9 @@ int fmorse(int argc, char **argv){
         return 0;
         if (*(*(argv+3)+1) != 'k')
         return 0;
-        for (int i=0;*(*(argv+4)+i)!='\0';i++){
 
-                    *(k+i) = *(*(argv+4)+i);
+        key = *((argv+4));
 
-                }
         printf("%s\n", key);
     }
 
