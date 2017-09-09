@@ -1,4 +1,5 @@
 #include "hw1.h"
+#include <stdlib.h>
 
 #ifdef _STRING_H
 #error "Do not #include <string.h>. You will get a ZERO."
@@ -19,10 +20,9 @@ int encryptpolybius(int argc, char **argv);
 int decryptpolybius(int argc, char **argv);
 int encryptfmorse(int argc, char **argv);
 int decryptfmorse(int argc, char **argv);
-int isRepeat(int argc, char **argv);
 int isFmAlphabet(int argc, char **argv);
 int isPolyAlphabet(int argc, char **argv);
-int isValidKey(int argc, char **argv, char cipher);
+int isValidKey(const char* key, char cipher);
 
 /**
  * @brief Validates command line arguments passed to the program.
@@ -67,7 +67,10 @@ int polybius(int argc, char **argv){
 
     int row = 0;
     int column = 0;
-    char* key = "my";
+    extern const char* key;
+    char* k;
+    k = malloc(sizeof(char));
+    key = k;
 
 
 
@@ -112,34 +115,44 @@ int polybius(int argc, char **argv){
         }
 
         if(*(*(argv+j)+1)=='k'){ //Key
-            printf("%s\n", "yo" );
             if(argc==j+1)
                 return 0;
             else{ //Key exists on cmd line
+
                 for (int i=0;*(*(argv+j+1)+i)!='\0';i++){
-                    printf("%d\n", i);
-                    printf("%c\n", *(*(argv+j+1)+i));
-                    *(key+i) = *(*(argv+j+1)+i);
+
+                    *(k+i) = *(*(argv+j+1)+i);
 
                 }
-                    printf("%s\n", "coming");
+
                     printf("%s\n", key);
             }
         }
 
         }
 
-        if(row<9 || row>15 || column<9 || column>15)
+        /*Checking key validity*/
+        if(isValidKey(key, 'p')==0)
+            return 0;
+
+        if(row<9 || row>15 || column<9 || column>15 ||row*column<93) //Checking row and column validity
             return 0;
     }
+
+
 
     if(*(*(argv+2)) != '-' )
         return 0;
 
-  /*  if (*(*(argv+2)+1) == 'e')
-        encryptpolybius(argc, argv);
-    if (*(*(argv+2)+1) == 'd')
-        decryptpolybius(argc, argv);*/
+    if (*(*(argv+2)+1) == 'e'){
+        //encryptpolybius(argc, argv);
+        printf("%d\n",(row<<4)|column );
+        return ((row<<4)|column);
+    }
+    if (*(*(argv+2)+1) == 'd'){
+        //decryptpolybius(argc, argv);
+        return (1<<13|((row<<4)|column));
+    }
 
     return 0;
 
@@ -148,80 +161,82 @@ int polybius(int argc, char **argv){
 
 int fmorse(int argc, char **argv){
 
+    extern const char* key;
+    char* k;
+    k = malloc(sizeof(char));
+    key = k;
+
+    if(argc>5)
+        return 0;
+
     if(argc<=2)
         return 0;
 
     if(*(*(argv+2)) != '-' )
         return 0;
 
-   /* if(*(*(argv+2)+1) != 'e')
-        encryptfmorse(argc, argv);
-    if(*(*(argv+2)+1) != 'd')
-        decryptfmorse(argc, argv);*/
+    if(argc>3){
+        if (*(*(argv+3)) != '-')
+        return 0;
+        if (*(*(argv+3)+1) != 'k')
+        return 0;
+        for (int i=0;*(*(argv+4)+i)!='\0';i++){
 
-    /*if (*(*(argv+2)+1) == 'd'){
-       if(isValidKey(argc, argv, 'f') ==1)
-            return 0x6000;
-        else
-            return 0;
+                    *(k+i) = *(*(argv+4)+i);
+
+                }
+        printf("%s\n", key);
     }
 
-    else if (*(*(argv+2)+1) == 'e' && argc>3){
-        if(isValidKey(argc, argv, 'f')==1)
+    /*Checking key validity*/
+        if(isValidKey(key, 'f')==0)
+            return 0;
+
+    if(*(*(argv+2)+1) != 'e'){
+            //encryptfmorse(argc, argv);
             return 0x4000;
-        else
-            return 0;
+        }
+    if(*(*(argv+2)+1) != 'd'){
+        //decryptfmorse(argc, argv);
+        return 0x6000;
     }
-    else
-        return 0;*/
+
     return 0;
 
 }
-
 /*This function will check if a key exists. If a key exists we validate it.
   @argc is length of command line argument
   @argv is the pointer to the line arument*/
-int isValidKey(int argc, char **argv, char cipher){
-    printf("%d\n", argc);
+int isValidKey(const char* key, char cipher){
 
-    if(*(*(argv+3)) != '-' )
-        return 0;
+    for (int i = 0;*(key+i)!='\0' ; i++)
+    {
+        for (int j = i+1; *(key+j)!='\0'; j++)
+        {
+            if(*(key+i)==*(key+j))
+                return 0;
+        }
 
-    if(*(*(argv+3)+1)!='k')
-        return 0;
-
-    if(cipher == 'p'){
-        if(isRepeat(argc, argv)!=1 /*&& isFmAlphabet(argc, argv)==1*/)
-            return 1;
     }
 
-    if(cipher == 'f'){
-        if(isRepeat(argc, argv)!=1 /*&& isPolyAlphabet(argc, argv)==1*/)
-            return 1;
+    if(cipher=='p'){ //Polyius cipher
+        for (int i = 0;*(key+i)!='\0' ; i++){
+            if(*(key+i)<33 || *(key+i)>126)
+                return 0;
+        }
     }
 
-    return 0;
-}
-
-int isRepeat(int argc, char **argv){
-
-    int i=0;
-
-    printf("cool \n");
-    printf("%c\n", *(*(argv+4)+4));
-
-    if(*(*(argv+4)+3) == '\0')
-        printf("success");
-
-    if(*(*(argv+4)+3) == *(*(argv+5)))
-        printf("success" );
-
-    while(*(*(argv+3)+i)){
+    if(cipher=='f'){ //F Morse Cipher
+        for (int i = 0;*(key+i)!='\0' ; i++){
+            if(*(key+i)<'A' || *(key+i)>'Z')
+                return 0;
+        }
 
     }
 
     return 1;
 }
+
 
 int encryptpolybius(int argc, char **argv){
     return 0;
