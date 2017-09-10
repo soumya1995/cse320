@@ -16,13 +16,14 @@
 /* function declaration */
 int polybius(int argc, char **argv);
 int fmorse(int argc, char **argv);
-int encryptpolybius(int argc, char **argv);
-int decryptpolybius(int argc, char **argv);
+int encryptPolybius(int row, int column, const char *key);
+int decryptPolybius(int row ,int column, const char *key);
 int encryptfmorse(int argc, char **argv);
 int decryptfmorse(int argc, char **argv);
 int isFmAlphabet(int argc, char **argv);
 int isPolyAlphabet(int argc, char **argv);
 int isValidKey(const char* key, char cipher);
+int strCompare(char *input, char *eof);
 
 /**
  * @brief Validates command line arguments passed to the program.
@@ -69,7 +70,7 @@ int polybius(int argc, char **argv){
     int column = 0;
     extern const char* key;
 
-
+    key = NULL;
 
 
     if(argc>9)
@@ -79,6 +80,8 @@ int polybius(int argc, char **argv){
         row = 10;
         column = 10;
     }
+
+    printf("%d\n", argc);
 
     if(argc>3){
         for(int j=3;j<argc;j=j+2){
@@ -119,17 +122,20 @@ int polybius(int argc, char **argv){
 
                 key = *((argv+j+1));
 
+                if(isValidKey(key, 'p')==0)
+                    return 0;
 
-
-                    printf("%s\n", key);
+                printf("%s\n", key);
             }
         }
 
         }
 
-        /*Checking key validity*/
-        if(isValidKey(key, 'p')==0)
+        /*Checking key validity
+        if(key!=NULL){
+            if(isValidKey(key, 'p')==0)
             return 0;
+        }*/
 
         if(row<9 || row>15 || column<9 || column>15 ||row*column<93) //Checking row and column validity
             return 0;
@@ -141,12 +147,12 @@ int polybius(int argc, char **argv){
         return 0;
 
     if (*(*(argv+2)+1) == 'e'){
-        //encryptpolybius(argc, argv);
+        encryptPolybius(row, column, key);
         printf("%d\n",(row<<4)|column );
         return ((row<<4)|column);
     }
     if (*(*(argv+2)+1) == 'd'){
-        //decryptpolybius(argc, argv);
+        decryptPolybius(row, column, key);
         return (1<<13|((row<<4)|column));
     }
 
@@ -196,9 +202,7 @@ int fmorse(int argc, char **argv){
     return 0;
 
 }
-/*This function will check if a key exists. If a key exists we validate it.
-  @argc is length of command line argument
-  @argv is the pointer to the line arument*/
+/*Validate the key*/
 int isValidKey(const char* key, char cipher){
 
     for (int i = 0;*(key+i)!='\0' ; i++)
@@ -211,7 +215,7 @@ int isValidKey(const char* key, char cipher){
 
     }
 
-    if(cipher=='p'){ //Polyius cipher
+    if(cipher=='p'){ //Polybius cipher
         for (int i = 0;*(key+i)!='\0' ; i++){
             if(*(key+i)<33 || *(key+i)>126)
                 return 0;
@@ -230,7 +234,168 @@ int isValidKey(const char* key, char cipher){
 }
 
 
-int encryptpolybius(int argc, char **argv){
+int encryptPolybius(int row ,int column, const char *key){
+
+    extern char polybius_table[];
+    extern char *polybius_alphabet;
+    printf("%d\n", row);
+    printf("%d\n", column);
+
+    int i=0;
+    //for(i=0;i<row*column;i++){
+        if(key != NULL){ //Check if key exists
+
+            for(int j=0;*(key+j)!='\0';j++) //Storing the key if any in the table
+                polybius_table[i++] = *(key+j);
+        }
+        for(int j=0; j<=93;j++){
+
+            int c=0;
+            for(int k=0;*(key+k)!='\0';k++){
+                if (*(key+k) == *(polybius_alphabet+j)){
+                    //printf("%c\n", *(polybius_alphabet+j));
+                    c = 1;
+                }
+            }//end of k
+            //printf("%c\n", *(polybius_alphabet+j));
+            //printf("%d\n", c);
+            if(c!=1){
+                polybius_table[i++] = *(polybius_alphabet+j);
+                //printf("%c\n", *(polybius_alphabet+j));
+            }
+        }
+    //}
+        //Fill in all remaining places with null character
+    for(int j=i;j<row*column;j++)
+        polybius_table[j] = '\0';
+
+    //Print elemnts in the table for checking
+    /*for (int i = 0;i<row*column; ++i)
+    {
+       printf("%c\n", polybius_table[i]);
+    }*/
+
+
+    char *input;
+    input = (char*)malloc(sizeof(char));
+    scanf("%s", input);
+
+    while(strCompare(input, "EOF") == 0){
+        for (int i = 0;*(input+i)!='\0'; i++)
+        {
+            int c = 0;
+            if(*(input+i)==' ' || *(input+i)=='\n' || *(input+i)=='\t'){
+                printf("%c", *(input+i));
+                c=1;
+                continue;
+            }
+            for(int j=0;j<row*column; j++){
+
+                if (polybius_table[j] == *(input+i))
+                {
+                    c = 1;
+                    printf("%d",j/column);
+                    printf("%d",j%column);
+
+                }
+
+            }
+
+            if(c!=1)
+                return 0;
+        }
+        printf(" ");
+        printf("\n");
+        scanf("%s", input);
+    }
+
     return 0;
 
+}
+
+int decryptPolybius(int row ,int column, const char *key){
+
+    extern char polybius_table[];
+    extern char *polybius_alphabet;
+    printf("%d\n", row);
+    printf("%d\n", column);
+
+    int i=0;
+    //for(i=0;i<row*column;i++){
+        if(key != NULL){ //Check if key exists
+
+            for(int j=0;*(key+j)!='\0';j++) //Storing the key if any in the table
+                polybius_table[i++] = *(key+j);
+        }
+        for(int j=0; j<=93;j++){
+
+            int c=0;
+            for(int k=0;*(key+k)!='\0';k++){
+                if (*(key+k) == *(polybius_alphabet+j)){
+                    //printf("%c\n", *(polybius_alphabet+j));
+                    c = 1;
+                }
+            }//end of k
+            //printf("%c\n", *(polybius_alphabet+j));
+            //printf("%d\n", c);
+            if(c!=1){
+                polybius_table[i++] = *(polybius_alphabet+j);
+                //printf("%c\n", *(polybius_alphabet+j));
+            }
+        }
+    //}
+        //Fill in all remaining places with null character
+    for(int j=i;j<row*column;j++)
+        polybius_table[j] = '\0';
+
+
+    char *input;
+    input = (char*)malloc(sizeof(char));
+    scanf("%s", input);
+
+    while(strCompare(input, "EOF") == 0){
+        for (int i = 0;*(input+i)!='\0'; i=i+2)
+        {
+
+            if(*(input+i)==' ' || *(input+i)=='\n' || *(input+i)=='\t'){
+                printf("%c", *(input+i));
+                continue;
+            }
+            else{
+            //GET CHAR BY PAIRS AND USE ROW MAJOR FORMULA
+            int r = *(input+i)-48;
+            int c = *(input+i+1)-48;
+
+
+            int offset = (r*column)+c;
+            printf("%c", polybius_table[offset]);
+            }
+        }
+        printf("\n");
+        scanf("%s", input);
+
+    }
+
+    return 0;
+
+}
+
+int strCompare(char *input, char *eof){
+
+    int i=0;
+    int flag = 0;
+
+
+    while(*(input+i)!='\0' && *(eof+i)!='\0'){
+        if (*(input+i)!=*(eof+i))
+        {
+            flag = 1;
+            break;
+        }
+        i++;
+    }
+
+    if(flag == 0 && *(input+i)=='\0' && *(eof+i)=='\0')
+        return 1;
+    return 0;
 }
