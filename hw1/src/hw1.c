@@ -18,8 +18,8 @@ int polybius(int argc, char **argv);
 int fmorse(int argc, char **argv);
 int encryptPolybius(int row, int column, const char *key);
 int decryptPolybius(int row ,int column, const char *key);
-int encryptfmorse(int argc, char **argv);
-int decryptfmorse(int argc, char **argv);
+int encryptFmorse(const char *key);
+int decryptFmorse(const char *key);
 int isFmAlphabet(int argc, char **argv);
 int isPolyAlphabet(int argc, char **argv);
 int isValidKey(const char* key, char cipher);
@@ -190,11 +190,12 @@ int fmorse(int argc, char **argv){
         if(isValidKey(key, 'f')==0)
             return 0;
 
-    if(*(*(argv+2)+1) != 'e'){
-            //encryptfmorse(argc, argv);
+    if(*(*(argv+2)+1) == 'e'){
+        printf("why?\n");
+            encryptFmorse(key);
             return 0x4000;
         }
-    if(*(*(argv+2)+1) != 'd'){
+    if(*(*(argv+2)+1) == 'd'){
         //decryptfmorse(argc, argv);
         return 0x6000;
     }
@@ -276,22 +277,18 @@ int encryptPolybius(int row ,int column, const char *key){
     }*/
 
 
-    char *input;
-    input = (char*)malloc(sizeof(char));
-    scanf("%s", input);
 
-    while(strCompare(input, "EOF") == 0){
-        for (int i = 0;*(input+i)!='\0'; i++)
-        {
+    int ch;
+    while((ch = getchar())!= EOF){
             int c = 0;
-            if(*(input+i)==' ' || *(input+i)=='\n' || *(input+i)=='\t'){
-                printf("%c", *(input+i));
+            if(ch == 32 || ch == 9 || ch == 10){
+                putchar(ch);
                 c=1;
                 continue;
             }
             for(int j=0;j<row*column; j++){
 
-                if (polybius_table[j] == *(input+i))
+                if (polybius_table[j] == ch)
                 {
                     c = 1;
                     printf("%d",j/column);
@@ -303,10 +300,6 @@ int encryptPolybius(int row ,int column, const char *key){
 
             if(c!=1)
                 return 0;
-        }
-        printf(" ");
-        printf("\n");
-        scanf("%s", input);
     }
 
     return 0;
@@ -348,36 +341,50 @@ int decryptPolybius(int row ,int column, const char *key){
     for(int j=i;j<row*column;j++)
         polybius_table[j] = '\0';
 
+    //Print elemnts in the table for checking
+    for (int i = 0;i<row*column; ++i)
+    {
+       printf("%c\n", polybius_table[i]);
+    }
 
-    char *input;
-    input = (char*)malloc(sizeof(char));
-    scanf("%s", input);
 
-    while(strCompare(input, "EOF") == 0){
-        for (int i = 0;*(input+i)!='\0'; i=i+2)
-        {
+    int ch1, ch2;
+    while((ch1 = getchar())!= EOF && (ch2 = getchar())!=EOF){
 
-            if(*(input+i)==' ' || *(input+i)=='\n' || *(input+i)=='\t'){
-                printf("%c", *(input+i));
-                continue;
+            if(ch1 == 32 || ch1 == 9 || ch1 == 10){
+                putchar(ch1);
             }
-            else{
+            if(ch2 == 32 || ch2 == 9 || ch2 == 10){
+                putchar(ch2);
+            }
+            if(ch1){
             //GET CHAR BY PAIRS AND USE ROW MAJOR FORMULA
-            int r = *(input+i)-48;
-            int c = *(input+i+1)-48;
-
+            int r = ch1-48;
+            int c = ch2-48;
 
             int offset = (r*column)+c;
             printf("%c", polybius_table[offset]);
             }
-        }
-        printf("\n");
-        scanf("%s", input);
-
     }
 
     return 0;
 
+}
+
+int encryptFmorse(const char *key){
+
+    int c;
+    printf("Bye\n");
+    FILE *file;
+    file = fopen("../rsrc/ans.txt", "r");
+    if(file){
+        while((c=getc(file))!=EOF){
+            putchar(c);
+        }
+        fclose(file);
+    }
+
+    return 0;
 }
 
 int strCompare(char *input, char *eof){
