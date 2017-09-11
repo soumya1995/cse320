@@ -191,7 +191,6 @@ int fmorse(int argc, char **argv){
             return 0;
 
     if(*(*(argv+2)+1) == 'e'){
-        printf("why?\n");
             encryptFmorse(key);
             return 0x4000;
         }
@@ -341,29 +340,25 @@ int decryptPolybius(int row ,int column, const char *key){
     for(int j=i;j<row*column;j++)
         polybius_table[j] = '\0';
 
-    //Print elemnts in the table for checking
-    for (int i = 0;i<row*column; ++i)
-    {
-       printf("%c\n", polybius_table[i]);
-    }
+
 
 
     int ch1, ch2;
-    while((ch1 = getchar())!= EOF && (ch2 = getchar())!=EOF){
+    while((ch1 = getchar())!= EOF){
 
             if(ch1 == 32 || ch1 == 9 || ch1 == 10){
                 putchar(ch1);
             }
-            if(ch2 == 32 || ch2 == 9 || ch2 == 10){
-                putchar(ch2);
-            }
-            if(ch1){
-            //GET CHAR BY PAIRS AND USE ROW MAJOR FORMULA
-            int r = ch1-48;
-            int c = ch2-48;
 
-            int offset = (r*column)+c;
-            printf("%c", polybius_table[offset]);
+
+            else{
+            //GET CHAR BY PAIRS AND USE ROW MAJOR FORMULA
+                ch2 = getchar();
+                int r = ch1-48;
+                int c = ch2-48;
+
+                int offset = (r*column)+c;
+                printf("%c", polybius_table[offset]);
             }
     }
 
@@ -373,15 +368,70 @@ int decryptPolybius(int row ,int column, const char *key){
 
 int encryptFmorse(const char *key){
 
-    int c;
-    printf("Bye\n");
-    FILE *file;
-    file = fopen("../rsrc/ans.txt", "r");
-    if(file){
-        while((c=getc(file))!=EOF){
-            putchar(c);
+    extern const char *morse_table[];
+    extern char polybius_table[];
+    extern char fm_key[];
+    extern const char *fm_alphabet;
+    extern const char *fractionated_table[];
+
+    char *buffer;
+    buffer = polybius_table ; //buffer CONTAINS MY INPUT IN MORSE CODE
+
+
+    /*DETERMINE THE KEY*/
+    int count=0;
+    if(key!=NULL){
+        for (int j = 0;*(key+j)!='\0'; ++j)
+            fm_key[count++] = *(key+j);
+    }
+    //PUTTING REST OF THE ALPHABETS IN THE FM_KEY
+    for(int j=0; j<=25;j++){
+
+            int c=0;
+            for(int k=0;*(key+k)!='\0';k++){
+                if (*(key+k) == *(fm_alphabet+j)){
+                    c = 1;
+                }
+            }//end of k
+
+            if(c!=1){
+                fm_key[count++] = *(fm_alphabet+j);
+            }
         }
-        fclose(file);
+
+    int c, i = 0;
+    while((c = getchar())!=EOF){ //ENCRYPTION
+
+        if(c == 32|| c == 9){
+            *(buffer+(i++)) = 'x';
+
+        }
+        else if(c == 10){ //WHEN NEWLINE IS ENCOUNTERED ENCRYPT THE STRING
+
+            *(buffer+(i++)) = 'x';
+
+            for(int i=0;*(buffer+i)!='\0';i=i+3){ //GET MORSE CODE FROM BUFFER INPUT IN GROUPS OF THREE AND CHECK WITH THE fractionated_table[]
+            for(int j=0; j<26;j++){
+                if(*(buffer+i) == *fractionated_table[j] && (*(buffer+i+1)) == (*(fractionated_table[j]+1)) && (*(buffer+i+2)) == (*(fractionated_table[j]+2))){
+                    putchar(fm_key[j]);
+                }
+            }
+
+        }
+        putchar(10);
+        i =0;
+        continue;
+        }
+        else{
+                if(*morse_table[c-33] == '\0')
+                    return 0;
+                for(int j=0;*(morse_table[c-33]+j)!='\0';j++){
+                    *(buffer+(i++)) = *(morse_table[c-33]+j);
+
+            }
+            *(buffer+(i++)) = 'x';
+        }
+
     }
 
     return 0;
