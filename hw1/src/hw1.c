@@ -187,12 +187,13 @@ int fmorse(int argc, char **argv){
 
         key = *((argv+4));
 
+        if(isValidKey(key, 'f')==0)
+            return 0;
         printf("%s\n", key);
     }
 
     /*Checking key validity*/
-        if(isValidKey(key, 'f')==0)
-            return 0;
+
 
     if(*(*(argv+2)+1) == 'e'){
             encryptFmorse(key);
@@ -343,7 +344,7 @@ int decryptPolybius(int row ,int column, const char *key){
 
      int i=0;
         if(key!=NULL){ //Check if key exists
-            printf("wrong\n");
+
             for(int j=0;*(key+j)!='\0';j++) //Storing the key if any in the table
                 polybius_table[i++] = *(key+j);
 
@@ -435,6 +436,7 @@ int encryptFmorse(const char *key){
     extern const char *fm_alphabet;
     extern const char *fractionated_table[];
 
+    printf("fmorse\n");
     char *buffer;
     buffer = polybius_table ; //buffer CONTAINS MY INPUT IN MORSE CODE
 
@@ -444,7 +446,7 @@ int encryptFmorse(const char *key){
     if(key!=NULL){
         for (int j = 0;*(key+j)!='\0'; ++j)
             fm_key[count++] = *(key+j);
-    }
+
     //PUTTING REST OF THE ALPHABETS IN THE FM_KEY
     for(int j=0; j<=25;j++){
 
@@ -459,6 +461,11 @@ int encryptFmorse(const char *key){
                 fm_key[count++] = *(fm_alphabet+j);
             }
         }
+    }
+    else{
+        for(int i=0;i<27; i++)
+            fm_key[i] = *(fm_alphabet+i);
+    }
 
     int c, i = 0;
     while((c = getchar())!=EOF){ //ENCRYPTION
@@ -479,6 +486,8 @@ int encryptFmorse(const char *key){
             }
 
         }
+        for(int i=0;*(buffer+i)!='\0';i++)
+            *(buffer+i) = '\0';
         putchar(10);
         i =0;
         continue;
@@ -506,12 +515,13 @@ int decryptFmorse(const char *key){
     extern const char *fm_alphabet;
     extern const char *fractionated_table[];
 
+
     /*DETERMINE THE KEY*/
     int count=0;
     if(key!=NULL){
         for (int j = 0;*(key+j)!='\0'; ++j)
             fm_key[count++] = *(key+j);
-    }
+
     //PUTTING REST OF THE ALPHABETS IN THE FM_KEY
     for(int j=0; j<=25;j++){
 
@@ -526,6 +536,11 @@ int decryptFmorse(const char *key){
                 fm_key[count++] = *(fm_alphabet+j);
             }
         }
+    }
+    else{
+        for(int i=0;i<27; i++)
+            fm_key[i] = *(fm_alphabet+i);
+    }
 
     char *buffer;
     buffer = polybius_table ; //buffer CONTAINS MY INPUT IN MORSE CODE
@@ -534,32 +549,23 @@ int decryptFmorse(const char *key){
     while((c = getchar())!=EOF){
         if(c == 10){ //THIS IS WHEN THE FULL FRACTIONED MORSE CODE IS IN THE BUFFER
 
-           /*for(int i=0;*(buffer+i)!='\0';i++)
-                printf("%c", *(buffer+i));
-            printf("\n");*/
+
             int k=0;
             for (int i = 0; *(buffer+i)!='\0'; i++)
-            {   //printf("%c\n", *(buffer+i));
+            {
                 if(flag == 1 && *(buffer+i)=='x'){
-                    //printf("flag %d\n", flag);
-                    //printf("%d", flag);
                     k = i+1;
                     putchar(32);
                     flag =0;
                     continue;
                 }
                 if(*(buffer+i)=='x'){ //GET ALL THE CHARACTERS BEFORE x
-                    //printf("In \n");
                     if(*(buffer+i+1)=='x')
                         flag = 1;
                     else
                         flag =0;
                     for(int j=0;j<89;j++){
-                        //printf("%d\n", j);
-                        //printf("%ld\n",sizeof(*(morse_table[j])) );
                         if((compare(j, k, buffer) == 1) && (*(morse_table[j])!='\0') && (i-k) == size(j)){
-                            //printf("%s\n", (morse_table[j]));
-                            //printf("%d \n",j);
                             putchar(j+33);
                             k = i+1;
                             break;
@@ -567,8 +573,11 @@ int decryptFmorse(const char *key){
                         }
                     }
                 }
-                //printf("i = %d\n", i);
+
             }
+
+            for(int i=0; *(buffer+i)!='\0';i++)/*CLEAR THE BUFFER*/
+                *(buffer+i) = '\0';
 
             j = 0;
             printf("\n");
@@ -576,8 +585,6 @@ int decryptFmorse(const char *key){
         else{
             for(int i=0;i<27;i++){
                 if(fm_key[i] == c){
-                    //printf("%d \n", i);
-                    //printf("%c \n", fm_key[i]);
                     *(buffer+(j++)) = *fractionated_table[i];
                     *(buffer+(j++)) = *(fractionated_table[i]+1);
                     *(buffer+(j++)) = *(fractionated_table[i]+2);
