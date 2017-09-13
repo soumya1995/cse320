@@ -180,7 +180,7 @@ int fmorse(int argc, char **argv){
 
         if(isValidKey(key, 'f')==0)
             return 0;
-        printf("%s\n", key);
+
     }
 
     /*Checking key validity*/
