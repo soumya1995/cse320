@@ -43,10 +43,7 @@ int size(int subscript);
  */
 
 unsigned short validargs(int argc, char **argv) {
-    //printf("Good \n");
-    //printf("%c \n",**(argv) );
-    //printf("%c \n",**(argv+1) );
-    //printf("%c \n", *(*(argv+1)+1) );
+
 
     if(argc<=1)
         return 0;
@@ -67,7 +64,6 @@ unsigned short validargs(int argc, char **argv) {
 }
 
 int polybius(int argc, char **argv){
-    printf("hi \n");
     int row = 0;
     int column = 0;
     extern const char* key;
@@ -83,11 +79,8 @@ int polybius(int argc, char **argv){
         column = 10;
     }
 
-   // printf("%d\n", argc);
-   // printf("yo \n");
 
     if(argc>3){
-       // printf("why its in\n");
         for(int j=3;j<argc;j=j+2){
 
 
@@ -102,7 +95,7 @@ int polybius(int argc, char **argv){
                         return 0;
                     row = row*10+(*(*(argv+j+1)+i)-48);
                 }
-                    //printf("%d\n", row);
+
             }
         }
 
@@ -135,11 +128,6 @@ int polybius(int argc, char **argv){
 
         }
 
-        /*Checking key validity
-        if(key!=NULL){
-            if(isValidKey(key, 'p')==0)
-            return 0;
-        }*/
 
         if(row<9 || row>15 || column<9 || column>15 ||row*column<93) //Checking row and column validity
             return 0;
@@ -151,12 +139,15 @@ int polybius(int argc, char **argv){
         return 0;
 
     if (*(*(argv+2)+1) == 'e'){
-        encryptPolybius(row, column, key);
-        printf("%d\n",(row<<4)|column );
+        int r = encryptPolybius(row, column, key);
+        if(r == 0)
+            return 0;
         return ((row<<4)|column);
     }
     if (*(*(argv+2)+1) == 'd'){
-        decryptPolybius(row, column, key);
+        int r = decryptPolybius(row, column, key);
+        if(r == 0)
+            return 0;
         return (1<<13|((row<<4)|column));
     }
 
@@ -196,11 +187,15 @@ int fmorse(int argc, char **argv){
 
 
     if(*(*(argv+2)+1) == 'e'){
-            encryptFmorse(key);
+            int r = encryptFmorse(key);
+            if(r == 0)
+                return 0;
             return 0x4000;
         }
     if(*(*(argv+2)+1) == 'd'){
-        decryptFmorse(key);
+        int r = decryptFmorse(key);
+        if(r == 0)
+            return 0;
         return 0x6000;
     }
 
@@ -243,22 +238,17 @@ int encryptPolybius(int row ,int column, const char *key){
 
     extern char polybius_table[];
     extern char *polybius_alphabet;
-    printf("%d\n", row);
-    printf("%d\n", column);
 
     int i=0;
         if(key!=NULL){ //Check if key exists
-            printf("wrong\n");
             for(int j=0;*(key+j)!='\0';j++) //Storing the key if any in the table
                 polybius_table[i++] = *(key+j);
 
-            printf("wrong1\n");
             for(int j=0; j<=93;j++){
 
                 int c=0;
                 for(int k=0;*(key+k)!='\0';k++){
                     if (*(key+k) == *(polybius_alphabet+j)){
-                    //printf("%c\n", *(polybius_alphabet+j));
                         c = 1;
                     }
                 }//end of k
@@ -331,7 +321,7 @@ int encryptPolybius(int row ,int column, const char *key){
                 return 0;
     }
 
-    return 0;
+    return 1;
 
 }
 
@@ -339,8 +329,6 @@ int decryptPolybius(int row ,int column, const char *key){
 
     extern char polybius_table[];
     extern char *polybius_alphabet;
-    //printf("%d\n", row);
-    //printf("%d\n", column);
 
      int i=0;
         if(key!=NULL){ //Check if key exists
@@ -354,7 +342,6 @@ int decryptPolybius(int row ,int column, const char *key){
                 int c=0;
                 for(int k=0;*(key+k)!='\0';k++){
                     if (*(key+k) == *(polybius_alphabet+j)){
-                    //printf("%c\n", *(polybius_alphabet+j));
                         c = 1;
                     }
                 }//end of k
@@ -424,7 +411,7 @@ int decryptPolybius(int row ,int column, const char *key){
             }
     }
 
-    return 0;
+    return 1;
 
 }
 
@@ -436,7 +423,6 @@ int encryptFmorse(const char *key){
     extern const char *fm_alphabet;
     extern const char *fractionated_table[];
 
-    printf("fmorse\n");
     char *buffer;
     buffer = polybius_table ; //buffer CONTAINS MY INPUT IN MORSE CODE
 
@@ -494,7 +480,7 @@ int encryptFmorse(const char *key){
         }
         else{
                 if(*morse_table[c-33] == '\0')
-                    return 1;
+                    return 0;
                 for(int j=0;*(morse_table[c-33]+j)!='\0';j++){
                     *(buffer+(i++)) = *(morse_table[c-33]+j);
 
@@ -504,7 +490,7 @@ int encryptFmorse(const char *key){
 
     }
 
-    return 0;
+    return 1;
 }
 
 int decryptFmorse(const char *key){

@@ -27,6 +27,9 @@ int main(int argc, char **argv)
         USAGE(*argv, EXIT_SUCCESS);
     }
 
+    if(mode == 0)
+        USAGE(*argv, EXIT_FAILURE);
+
     return EXIT_SUCCESS;
 }
 
