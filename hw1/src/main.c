@@ -27,8 +27,10 @@ int main(int argc, char **argv)
         USAGE(*argv, EXIT_SUCCESS);
     }
 
-    if(mode == 0)
+    if(argc == 1)
         USAGE(*argv, EXIT_FAILURE);
+    if(mode == 0)
+        return EXIT_FAILURE;
 
     return EXIT_SUCCESS;
 }
