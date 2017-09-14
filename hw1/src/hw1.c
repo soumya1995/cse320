@@ -490,6 +490,8 @@ int encryptFmorse(const char *key){
 
     }
 
+    printf("\n");
+
     return 1;
 }
 
@@ -535,6 +537,8 @@ int decryptFmorse(const char *key){
     while((c = getchar())!=EOF){
         if(c == 10){ //THIS IS WHEN THE FULL FRACTIONED MORSE CODE IS IN THE BUFFER
 
+            if(*(buffer+j-1)!='x')
+                *(buffer+j) = 'x';
 
             int k=0;
             for (int i = 0; *(buffer+i)!='\0'; i++)
@@ -580,7 +584,7 @@ int decryptFmorse(const char *key){
         }
     }
 
-    return 0;
+    return 1;
 }
 
 int size(int subscript){
