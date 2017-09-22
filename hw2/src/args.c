@@ -13,6 +13,8 @@ char *optarg;
 
 state_t *program_state;
 
+
+
 void
 parse_args(int argc, char *argv[])
 {
@@ -22,7 +24,7 @@ parse_args(int argc, char *argv[])
 
   joined_argv = join_string_array(argc, argv);
   info("argc: %d argv: %s", argc, joined_argv);
-  free(joined_argv);
+  //free(joined_argv);///NOT SURE YET
 
   program_state = Calloc(1, sizeof(state_t));
   for (i = 0; optind < argc; ++i) {
@@ -35,15 +37,17 @@ parse_args(int argc, char *argv[])
         case 'e': {
           info("Encoding Argument: %s", optarg);
           if ((program_state->encoding_to = determine_format(optarg)) == 0)
-            goto errorcase;
+            print_state();
+          break;
         }
         case '?': {
           if (optopt != 'h')
             fprintf(stderr, KRED "-%c is not a supported argument\n" KNRM,
                     optopt);
-        case "errorcase"[0]:
+        print_state();
           USAGE(argv[0]);
           exit(0);
+          break;
         }
         default: {
           break;
@@ -123,7 +127,7 @@ array_size(int count, char *array[])
 void
 print_state()
 {
-errorcase:
+
   if (program_state == NULL) {
     error("program_state is %p", (void*)program_state);
     exit(EXIT_FAILURE);
@@ -137,3 +141,5 @@ errorcase:
          program_state->encoding_to, program_state->encoding_from,
          program_state->in_file, program_state->out_file);
 }
+
+

@@ -34,12 +34,14 @@ from_utf16le_to_utf16be(int infile, int outfile)
   return ret;
 }
 
-/*int
+int
 from_utf16le_to_utf8(int infile, int outfile)
 {
-  *TODO*
+  /*TODO*/
+  printf("%d\n", infile);
+  printf("%d\n",outfile);
   return -1;
-}*/
+}
 
 utf16_glyph_t
 code_point_to_utf16le_glyph(code_point_t code_point, size_t *size_of_glyph)
