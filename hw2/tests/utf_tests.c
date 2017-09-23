@@ -104,7 +104,7 @@ Test(wrappers_suite, reverse_bytes) {
 }
 
 Test(args_suite, join_string_array) {
-    char *a[] = {"hello", "world", NULL};
+    char *a[] = {"hello","world", NULL};
 
     char *s = join_string_array(2, a);
 

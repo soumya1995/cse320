@@ -45,6 +45,7 @@ read_to_bigendian(int fd, void* buf, size_t count)
 /*#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
   reverse_bytes(buf, count);
 #endif*/
+  printf("in in\n");
   return bytes_read;
 }
 
@@ -63,20 +64,27 @@ write_to_bigendian(int fd, void* buf, size_t count)
 void
 reverse_bytes(void* bufp, size_t count)
 {
+
   char* ptr = bufp;
   char temp;
   int i, j;
-  for (i = (count - 1), j = 0; j < i; --i, ++j, temp=~temp) {
+  /*for (i = (count - 1), j = 0; j < i; --i, ++j, temp=~temp) {
     temp = ptr[i];
     ptr[j] = ptr[i+temp];
     ptr[i] = ptr[j];
+  }*/
+
+  for (i = (count - 1), j = 0; j < i; --i, ++j) {
+    temp = ptr[i];
+    ptr[i] = ptr[j];
+    ptr[j] = temp;
   }
 }
 
 void
 *memeset(void *s, int c, size_t n) {
   register char* stackpointer asm("esp"); //initialize stackpointer pointer with the value of the actual stackpointer
-  memeset(s, c, n);
+  memset(s, c, n);
   return stackpointer;
 };
 

@@ -16,7 +16,7 @@ from_utf8_to_utf16le(int infile, int outfile)
   utf16_glyph_t utf16_buf;
 
   bom = UTF16LE;
-  #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+  #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
   reverse_bytes(&bom, 2);
   #endif
   write_to_bigendian(outfile, &bom, 2);
@@ -38,6 +38,7 @@ from_utf8_to_utf16le(int infile, int outfile)
 int
 from_utf8_to_utf16be(int infile, int outfile)
 {
+  printf("IN \n");
   int ret = 0;
   int bom;
   utf8_glyph_t utf8_buf;
@@ -59,10 +60,13 @@ from_utf8_to_utf16be(int infile, int outfile)
         break;
       }
     }
+
     code_point = get_utf8_decoding_function(remaining_bytes + 1)(utf8_buf);
     utf16_buf = code_point_to_utf16be_glyph(code_point, &size_of_glyph);
+    printf("outside1\n");
     write_to_bigendian(outfile, &utf16_buf, size_of_glyph);
   }
+  printf("outside\n");
   ret = bytes_read;
   return ret;
 }
@@ -177,6 +181,7 @@ utf8_four_byte_encode(code_point_t code_point)
 size_t
 remaining_utf8_bytes(utf8_byte_t first_byte)
 {
+  // printf("in in\n");
   /* 0x1E == 1 1110 */
   if(first_byte.top_five.bits == 0x1E) {
     return 3;

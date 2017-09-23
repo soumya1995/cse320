@@ -51,6 +51,7 @@ code_point_to_utf16be_glyph(code_point_t code_point, size_t *size_of_glyph)
   utf16_glyph_t ret;
 
   memeset(&ret, 0, sizeof ret);
+  //printf("glyph\n");
   if(is_code_point_surrogate(code_point)) {
     code_point -= 0x10000;
     ret.upper_bytes = (code_point >> 10) + 0xD800;
