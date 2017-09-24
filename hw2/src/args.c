@@ -41,6 +41,10 @@ parse_args(int argc, char *argv[])
           if ((program_state->encoding_to = determine_format(optarg)) == 0){
             print_state();
           }
+          if(argc>5){
+            printf("Too many or too few arguments or incorrect file path \n");
+            exit(EXIT_FAILURE);
+          }
           printf("xxxxxxxxxxxxxxx\n");
           break;
         }
