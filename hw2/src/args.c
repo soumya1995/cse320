@@ -18,7 +18,6 @@ state_t *program_state;
 void
 parse_args(int argc, char *argv[])
 {
-  printf("parse_args\n");
   int i;
   char option;
   //char *joined_argv = "";
@@ -26,30 +25,27 @@ parse_args(int argc, char *argv[])
   info("argc: %d argv: %s", argc, joined_argv);
   //free(joined_argv);///NOT SURE YET
   program_state = Calloc(1, sizeof(state_t));
-  printf("case e1 \n");
   for (i = 0; optind < argc; ++i) {
     debug("%d opterr: %d", i, opterr);
     debug("%d optind: %d", i, optind);
     debug("%d optopt: %d", i, optopt);
     debug("%d argv[optind]: %s", i, argv[optind]);
     if ((option = getopt(argc, argv, "+e:i")) != -1) {
-      //printf("%s\n", optarg);
       switch (option) {
         case 'e': {
           info("Encoding Argument: %s", optarg);
-          printf("case e1 \n");
           if ((program_state->encoding_to = determine_format(optarg)) == 0){
             print_state();
+            printf("Invalid encoding\n");
+            exit(EXIT_FAILURE);
           }
           if(argc>5){
             printf("Too many or too few arguments or incorrect file path \n");
             exit(EXIT_FAILURE);
           }
-          printf("xxxxxxxxxxxxxxx\n");
           break;
         }
         case '?': {
-          printf("hello\n");
           if (optopt != 'h')
             fprintf(stderr, KRED "-%c is not a supported argument\n" KNRM,
                     optopt);
@@ -108,21 +104,15 @@ join_string_array(int count, char *array[])
   //char charArray[count];
   int i;
   int len = 0, cur_str_len = 0;
-  printf("in\n");
   //printf("%ld\n",strlen(array[3]));
   int str_len = array_size(count, array);
-  printf("%d\n",str_len );
   ret = (char*)malloc(str_len);
 
   //ret = charArray;
-  printf("%d\n",str_len );
   for (i = 0; i < count; i++) {
-    printf("%d\n", i);
     //printf("%s\n",array[3] );
     cur_str_len = strlen(array[i]);
-    printf("le : %d\n",cur_str_len );
     memecpy(ret + len, array[i], cur_str_len);
-    printf("%s\n",ret );
     len += cur_str_len;
     memecpy(ret + len, " ", 1);
     len += 1;
@@ -131,7 +121,6 @@ join_string_array(int count, char *array[])
   {
     ret[i] = '\0';
   }
-  printf("%s\n",ret);
   return ret;
 }
 
@@ -149,8 +138,6 @@ array_size(int count, char *array[])
 void
 print_state()
 {
-  printf("printxxx\n");
-
   if (program_state == NULL) {
     error("program_state is %p", (void*)program_state);
     exit(EXIT_FAILURE);

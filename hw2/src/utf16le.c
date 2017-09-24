@@ -16,7 +16,7 @@ from_utf16le_to_utf16be(int infile, int outfile)
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
   reverse_bytes(&bom, 2);
 #endif
-  write_to_bigendian(outfile, &bom, 2);
+  //write_to_bigendian(outfile, &bom, 2);
 
   while ((bytes_read = read_to_bigendian(infile, &(buf.upper_bytes), 2)) > 0) {
     bytes_to_write = 2;
@@ -52,9 +52,7 @@ from_utf16le_to_utf8(int infile, int outfile)
   bytes_read = read_to_bigendian(infile, &(buf.upper_bytes), 2);
   while ((bytes_read = read_to_bigendian(infile, &(buf.upper_bytes), 2)) > 0) {
     if(is_upper_surrogate_pair(buf)) {
-      printf("surrogate\n");
       if ((bytes_read = read_to_bigendian(infile, &(buf.lower_bytes), 2)) > 0) {
-        printf("surrogate\n");
         code_point = 0x10000;
         code_point += (buf.upper_bytes & 0x03FF) << 10;
         code_point += (buf.lower_bytes & 0x03FF);
@@ -75,13 +73,8 @@ from_utf16le_to_utf8(int infile, int outfile)
     write_to_bigendian(outfile, &utf8_buf, size_of_glyph);
   }
 
-  printf("%d\n",infile);
-  printf("%d\n",outfile);
   ret = bytes_read;
   return ret;
-  printf("%d\n", infile);
-  printf("%d\n",outfile);
-  return -1;
 }
 
 utf16_glyph_t

@@ -45,7 +45,6 @@ read_to_bigendian(int fd, void* buf, size_t count)
 /*#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
   reverse_bytes(buf, count);
 #endif*/
-  printf("in in\n");
   return bytes_read;
 }
 
