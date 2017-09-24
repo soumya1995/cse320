@@ -16,10 +16,10 @@ from_utf8_to_utf16le(int infile, int outfile)
   utf16_glyph_t utf16_buf;
 
   bom = UTF16LE;
-  #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+  #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
   reverse_bytes(&bom, 2);
   #endif
-  write_to_bigendian(outfile, &bom, 2);
+  //write_to_bigendian(outfile, &bom, 2);
 
   while((bytes_read = read_to_bigendian(infile, &utf8_buf.bytes[0], 1)) > 0) {
     if((remaining_bytes = remaining_utf8_bytes(utf8_buf.bytes[0]))) {
@@ -52,7 +52,7 @@ from_utf8_to_utf16be(int infile, int outfile)
   #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
   reverse_bytes(&bom, 2);
   #endif
-  write_to_bigendian(outfile, &bom, 2);
+ // write_to_bigendian(outfile, &bom, 2);
 
   while((bytes_read = read_to_bigendian(infile, &utf8_buf.bytes[0], 1)) > 0) {
     if((remaining_bytes = remaining_utf8_bytes(utf8_buf.bytes[0]))) {
@@ -98,13 +98,13 @@ get_utf8_encoding_function(size_t size)
 {
   switch(size) {
   case 1:
-    return utf8_one_byte_encode;
+    return &utf8_one_byte_encode;
   case 2:
-    return utf8_two_byte_encode;
+    return &utf8_two_byte_encode;
   case 3:
-    return utf8_three_byte_encode;
+    return &utf8_three_byte_encode;
   case 4:
-    return utf8_four_byte_encode;
+    return &utf8_four_byte_encode;
   }
   return NULL;
 }

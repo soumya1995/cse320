@@ -2,6 +2,7 @@
 #include "debug.h"
 #include "wrappers.h"
 #include <unistd.h>
+#include <inttypes.h>
 
 int
 from_utf16be_to_utf16le(int infile, int outfile)
@@ -34,15 +35,49 @@ from_utf16be_to_utf16le(int infile, int outfile)
   return ret;
 }
 
-
-
 int
 from_utf16be_to_utf8(int infile, int outfile)
 {
-  /*TODO*/
+  int ret = 0;
+  int bom;
+  utf8_glyph_t utf8_buf;
+  utf16_glyph_t buf;
+  ssize_t bytes_read;
+  size_t size_of_glyph;
+  code_point_t code_point;
+
+  bom = UTF8;
+  /*#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__*/
+  write_to_bigendian(outfile, &bom, 3);
+  /*#endif*/
+  bytes_read = read_to_bigendian(infile, &(buf.upper_bytes), 2);
+  while ((bytes_read = read_to_bigendian(infile, &(buf.upper_bytes), 2)) > 0) {
+    reverse_bytes(&buf.upper_bytes, 2);
+    if(is_upper_surrogate_pair(buf)) {
+      if ((bytes_read = read_to_bigendian(infile, &(buf.lower_bytes), 2)) > 0) {
+        reverse_bytes(&buf.lower_bytes, 2);
+        code_point = 0x10000;
+        code_point += (buf.upper_bytes & 0x03FF) << 10;
+        code_point += (buf.lower_bytes & 0x03FF);
+
+       size_of_glyph = utf8_glyph_size_of_code_point(code_point);
+       utf8_buf = code_point_to_utf8_glyph(code_point, &size_of_glyph);
+      }
+    }
+    else{
+      code_point = buf.upper_bytes;
+      size_of_glyph = utf8_glyph_size_of_code_point(code_point);
+      utf8_buf = code_point_to_utf8_glyph(code_point, &size_of_glyph);
+
+    }
+
+    write_to_bigendian(outfile, &utf8_buf, size_of_glyph);
+  }
+
   printf("%d\n",infile);
   printf("%d\n",outfile);
-  return -1;
+  ret = bytes_read;
+  return ret;
 }
 
 utf16_glyph_t
