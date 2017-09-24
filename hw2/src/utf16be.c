@@ -18,7 +18,6 @@ from_utf16be_to_utf16le(int infile, int outfile)
   reverse_bytes(&bom, 2);
 #endif
   //write_to_bigendian(outfile, &bom, 2);
-  printf("in\n");
   while ((bytes_read = read_to_bigendian(infile, &(buf.upper_bytes), 2)) > 0) {
     bytes_to_write = 2; /* utf-32 future compatibility */
     reverse_bytes(&buf.upper_bytes, 2);

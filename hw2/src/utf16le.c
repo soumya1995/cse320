@@ -64,8 +64,6 @@ from_utf16le_to_utf8(int infile, int outfile)
     else{
       code_point = buf.upper_bytes;
       size_of_glyph = utf8_glyph_size_of_code_point(code_point);
-      printf("code point: %x\n",code_point);
-      printf("size: %ld\n",size_of_glyph);
       utf8_buf = code_point_to_utf8_glyph(code_point, &size_of_glyph);
 
     }
