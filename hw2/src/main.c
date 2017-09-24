@@ -11,7 +11,7 @@ main(int argc, char *argv[])
   check_bom();
   print_state();
   in_flags = O_RDONLY;
-  out_flags = O_WRONLY | O_CREAT;
+  out_flags = O_WRONLY | O_CREAT | O_TRUNC;
   infile = Open(program_state->in_file, in_flags);
   outfile = Open(program_state->out_file, out_flags);
   lseek(SEEK_SET, program_state->bom_length, infile); /* Discard BOM */
