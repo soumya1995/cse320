@@ -55,8 +55,8 @@ Test(sf_memsuite_student, free_no_coalesce, .init = sf_mem_init, .fini = sf_mem_
 	sf_errno = 0;
 	/* void *x = */ sf_malloc(sizeof(long));
 	void *y = sf_malloc(sizeof(double) * 10);
-	/* void *z = */ sf_malloc(sizeof(char));
 
+	/* void *z = */ sf_malloc(sizeof(char));
 	sf_free(y);
 
 	free_list *fl = &seg_free_list[find_list_index_from_size(96)];
@@ -90,6 +90,8 @@ Test(sf_memsuite_student, free_coalesce, .init = sf_mem_init, .fini = sf_mem_fin
 }
 
 Test(sf_memsuite_student, freelist, .init = sf_mem_init, .fini = sf_mem_fini) {
+
+
 	/* void *u = */ sf_malloc(1);          //32
 	void *v = sf_malloc(LIST_1_MIN); //48
 	void *w = sf_malloc(LIST_2_MIN); //160
@@ -103,6 +105,7 @@ Test(sf_memsuite_student, freelist, .init = sf_mem_init, .fini = sf_mem_fini) {
 	sf_free(w);
 	sf_free(x);
 	sf_free(y);
+
 
 	// First block in each list should be the most recently freed block
 	for (int i = 0; i < FREE_LIST_COUNT; i++) {
@@ -184,4 +187,54 @@ Test(sf_memsuite_student, realloc_smaller_block_free_block, .init = sf_mem_init,
 //STUDENT UNIT TESTS SHOULD BE WRITTEN BELOW
 //DO NOT DELETE THESE COMMENTS
 //############################################
+
+
+Test(sf_memsuite_student, Malloc_free_exactly_four_pages, .init = sf_mem_init, .fini = sf_mem_fini) {
+	sf_errno = 0;
+	void *x = sf_malloc((PAGE_SZ << 2)-(SF_FOOTER_SIZE/8)-(SF_HEADER_SIZE/8));
+
+	cr_assert_null(x, "x is NULL!");
+	cr_assert(sf_errno == ENOMEM, "sf_errno is set to ENOMEM!");
+	cr_assert(sf_errno != EINVAL, "sf_errno is set to EINVAL");
+}
+
+Test(sf_memsuite_student, Realloc_to_zero_size, .init = sf_mem_init, .fini = sf_mem_fini){
+
+	void *x = sf_malloc(sizeof(long));
+	void *y = sf_realloc(x,0);
+
+	cr_assert_null(y, "y is not NULL");
+
+	free_list *fl = &seg_free_list[find_list_index_from_size(sizeof(long))];
+	cr_assert_null(fl->head->next, "Only one block is expected");
+
+}
+
+Test(sf_memsuite_student, Malloc_zero_size, .init = sf_mem_init, .fini = sf_mem_fini){
+
+	void *x = sf_malloc(0);
+
+	cr_assert_null(x, "x is not NULL!");
+	cr_assert(sf_errno == EINVAL, "sf_errno is not set to EINVAL");
+
+}
+
+Test(sf_memsuite_student, realloc_size_colease_free_blocks, .init = sf_mem_init, .fini = sf_mem_fini){
+
+	void *x = sf_malloc(sizeof(double));
+	void *y = sf_malloc(sizeof(double));
+	void *z = sf_malloc(sizeof(double));
+
+	sf_free(x);
+	sf_free(z);
+
+	y = sf_realloc(y,60);
+
+	cr_assert(errno!=EINVAL, "errno is set to EINVAL");
+	cr_assert(errno!=ENOMEM, "errno is set to ENOMEM");
+
+	free_list *fl = &seg_free_list[find_list_index_from_size(sizeof(double)+sizeof(double))];
+	cr_assert_null(fl->head->next, "Only one block is expected");
+
+}
 
