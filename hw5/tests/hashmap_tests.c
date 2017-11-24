@@ -61,21 +61,19 @@ Test(map_suite, 00_creation, .timeout = 2, .init = map_init, .fini = map_fini) {
 
 Test(map_suite, 02_multithreaded, .timeout = 2, .init = map_init, .fini = map_fini) {
     pthread_t thread_ids[NUM_THREADS];
-
     // spawn NUM_THREADS threads to put elements
     for(int index = 0; index < NUM_THREADS; index++) {
         int *key_ptr = malloc(sizeof(int));
         int *val_ptr = malloc(sizeof(int));
         *key_ptr = index;
         *val_ptr = index * 2;
-
         map_insert_t *insert = malloc(sizeof(map_insert_t));
         insert->key_ptr = key_ptr;
         insert->val_ptr = val_ptr;
-
         if(pthread_create(&thread_ids[index], NULL, thread_put, insert) != 0)
             exit(EXIT_FAILURE);
     }
+
 
     // wait for threads to die before checking queue
     for(int index = 0; index < NUM_THREADS; index++) {

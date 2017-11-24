@@ -28,4 +28,5 @@ typedef struct response_header_t {
 
 typedef enum response_codes { OK = 200, UNSUPPORTED = 220, BAD_REQUEST = 400, NOT_FOUND = 404 } response_codes;
 
+
 #endif

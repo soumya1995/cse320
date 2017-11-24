@@ -74,7 +74,7 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force);
  *
  * @param self The hash map to use
  * @param key The key to search for
- * @return The corresponding value, or a map_val_t instance with a null
+ * @return The corresponding value, or a mapmak_val_t instance with a null
  *         pointer and a value length of 0 if the key is not found.
  */
 map_val_t get(hashmap_t *self, map_key_t key);
