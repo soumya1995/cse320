@@ -1041,7 +1041,7 @@ int open_listenfd(char *port)
     return -1;
     }
 
-    printf("host");
+    //printf("host");
     return listenfd;
 }
 /* $end open_listenfd */

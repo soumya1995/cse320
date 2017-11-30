@@ -8,7 +8,7 @@
 #define MAP_VAL(base, len) (map_val_t) {.val_base = base, .val_len = len}
 #define MAP_NODE(key_arg, val_arg, tombstone_arg) (map_node_t) {.key = key_arg, .val = val_arg, .tombstone = tombstone_arg}
 
-bool key_exists(hashmap_t *self, map_key_t key);
+int key_exists(hashmap_t *self, map_key_t key);
 
 hashmap_t *create_map(uint32_t capacity, hash_func_f hash_function, destructor_f destroy_function) {
 
@@ -20,7 +20,7 @@ hashmap_t *create_map(uint32_t capacity, hash_func_f hash_function, destructor_f
         return NULL;
     }
 
-    if((hashmap = (hashmap_t*)calloc(sizeof(hashmap_t), sizeof(hashmap_t))) == NULL)
+    if((hashmap = (hashmap_t*)calloc(1, sizeof(hashmap_t))) == NULL)
         return NULL;
 
     if(pthread_mutex_init(&hashmap->write_lock, NULL) != 0)
@@ -29,7 +29,7 @@ hashmap_t *create_map(uint32_t capacity, hash_func_f hash_function, destructor_f
     if(pthread_mutex_init(&hashmap->fields_lock, NULL) != 0)
         return NULL;
 
-    if((hashmap->nodes = (map_node_t*)calloc(sizeof(map_node_t)*capacity, sizeof(map_node_t)*capacity)) == NULL)
+    if((hashmap->nodes = (map_node_t*)calloc(capacity, sizeof(map_node_t))) == NULL)
         return NULL;
 
     hashmap->capacity = capacity;
@@ -65,9 +65,8 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
 
     map_node_t *node= ((self->nodes)+index);
     if(self->size < self->capacity){
-        if(key_exists(self, key) != true){ /*Key doesn't exist; find an empty spot to store the key*/
-            while((node->key).key_base != NULL && node->tombstone == false){
-
+        if(key_exists(self, key) == -1){ /*Key doesn't exist; find an empty spot to store the key*/
+                 while((node->key).key_base != NULL && node->tombstone == false){
                 index = (index+1)%self->capacity;
                 node = ((self->nodes)+index);
             }
@@ -100,6 +99,7 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
 
 
 
+
     mapfull:
 
     if(pthread_mutex_unlock(&self->write_lock) != 0) /*UNLOCK THE BUFFER*/
@@ -126,9 +126,9 @@ map_val_t get(hashmap_t *self, map_key_t key) {
     if(pthread_mutex_unlock(&self->fields_lock)!= 0) /*UNLOCK THE FIELDS*/
         abort();
 
+
         /*ERROR CASE*/
     if(self == NULL || self->invalid == true || key.key_base == NULL || key.key_len == 0){
-
         errno = EINVAL;
         return MAP_VAL(NULL, 0);
     }
@@ -140,8 +140,11 @@ map_val_t get(hashmap_t *self, map_key_t key) {
 
     map_node_t *node= ((self->nodes)+index);
 
-    if(memcmp((node->key).key_base, key.key_base, (node->key).key_len) == 0) /*key found at the index given by get_index()*/
+
+    if(memcmp((node->key).key_base, key.key_base, (node->key).key_len) == 0) /*key found at the index given by get_index()*/{
+        flag = 1 ;
         value = node->val;
+    }
 
     else{
 
@@ -189,46 +192,32 @@ map_node_t delete(hashmap_t *self, map_key_t key) {
     if(self == NULL || self->invalid == true || key.key_base == NULL || key.key_len == 0){
 
         errno = EINVAL;
+
+        if(pthread_mutex_unlock(&self->write_lock) != 0) /*UNLOCK THE BUFFER*/
+        abort();
+
         return MAP_NODE(MAP_KEY(NULL, 0), MAP_VAL(NULL, 0), false);
+
     }
 
     int index = get_index(self, key);
-    int index_cpy = index;
+   // int index_cpy = index;
 
     map_node_t *node_return;
 
-    map_node_t *node= ((self->nodes)+index);
 
-    if(key_exists(self, key) == false) /*key doesn't exist*/
+    if((index = key_exists(self, key)) == -1) /*key doesn't exist*/{
         node_return = &MAP_NODE(MAP_KEY(NULL, 0), MAP_VAL(NULL, 0), false);
+    }
 
     else{ /*key exists*/
-
-        if(memcmp((node->key).key_base, key.key_base, (node->key).key_len) == 0){ /*key found at the index given by get_index()*/
+            map_node_t *node= ((self->nodes)+index);
             node->tombstone = true;
             node_return = node;
+
+
+            self->size--;
         }
-
-        else{
-
-            index++;
-            node = ((self->nodes)+index);
-
-            while(index!=index_cpy){
-
-                if(memcmp((node->key).key_base, key.key_base, (node->key).key_len) == 0){
-                    node->tombstone = true;
-                    node_return = node;
-                    break;
-                }
-
-                index = (index+1)%self->capacity;
-                node = ((self->nodes)+index);
-            }
-        }
-
-        self->size--;
-    }
 
 
     if(pthread_mutex_unlock(&self->write_lock) != 0) /*UNLOCK THE BUFFER*/
@@ -238,7 +227,7 @@ map_node_t delete(hashmap_t *self, map_key_t key) {
 }
 
 /*ONLY PUT AND DELETE SHOULD USE THIS FUNCTION BEACUSE THREADS ARE NEVER LOCKED*/
-bool key_exists(hashmap_t *self, map_key_t key){
+int key_exists(hashmap_t *self, map_key_t key){
 
 
     int index = get_index(self, key);
@@ -248,8 +237,10 @@ bool key_exists(hashmap_t *self, map_key_t key){
 
     map_node_t *node= ((self->nodes)+index);
 
-    if(memcmp((node->key).key_base, key.key_base, (node->key).key_len) == 0) /*key found at the index given by get_index()*/
+    if(memcmp((node->key).key_base, key.key_base, (node->key).key_len) == 0) /*key found at the index given by get_index()*/{
+        flag = 1;
         value = node->val;
+    }
 
     else{
 
@@ -272,9 +263,9 @@ bool key_exists(hashmap_t *self, map_key_t key){
         value = MAP_VAL(NULL, 0);
 
     if(value.val_base == NULL && value.val_len == 0)
-        return false;
+        return -1;
 
-    return true;
+    return index;
 }
 
 bool clear_map(hashmap_t *self) {

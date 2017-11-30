@@ -68,15 +68,24 @@ bool enqueue(queue_t *self, void *item) {
 
     /*MAKE A NEW NODE */
     node = (queue_node_t*)calloc(sizeof(queue_node_t), sizeof(queue_node_t));
+    node->item = item;
+    node->next = NULL;
 
     if(pthread_mutex_lock(&self->lock) !=0 ) /*LOCK THE BUFFER*/
         return false;
 
+
+    if(self->rear == NULL){ /*ADDING THE FIRST NODE*/
+
+        self->front = self->rear = node;
+        goto unlock;
+    }
+
     /*PUT THE NEWLY CREATED NODE AT THE REAR*/
-    node->item = item;
-    node->next = self->rear;
+    self->rear->next = node;
     self->rear = node;
 
+    unlock:
     if(pthread_mutex_unlock(&self->lock) != 0) /*UNLOCK THE BUFFER*/
     return false;
 
@@ -104,8 +113,14 @@ void *dequeue(queue_t *self) {
     if(pthread_mutex_lock(&self->lock) != 0) /*LOCK THE BUFFER*/
         return NULL;
 
+    if(self->front == NULL)
+        return NULL;
+
     queue_node_t *node = self->front;
     self->front = self->front->next;
+
+    if(self->front == NULL)
+        self->rear = NULL;
 
     void *item = node->item;
     free(node);
