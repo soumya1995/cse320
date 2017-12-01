@@ -65,7 +65,6 @@ int main(int argc, char *argv[]) {
     }
 
     Close(serverfd);
-
     exit(0);
 }
 
@@ -181,6 +180,9 @@ void handle_put(int clientfd, request_header_t request_header){
 
     /*WRITE TO THE SOCKET*/
     Rio_writen(clientfd, &response_header, sizeof(response_header));
+
+    if(errno == EPIPE)
+
     /*WE DON'T NEED TO FREE KEY_BASE AND VAUE_BASE; KEY AND VALUE ARE BEING PUT IN THE MAP*/
     return;
 }
