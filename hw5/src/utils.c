@@ -4,6 +4,7 @@
  */
 
 #include "utils.h"
+#include <stdio.h>
 
 /*
  * Computes the hash of a byte stream.
@@ -23,6 +24,8 @@ uint32_t jenkins_one_at_a_time_hash(map_key_t map_key) {
     hash += hash << 3;
     hash ^= hash >> 11;
     hash += hash << 15;
+
+
     return hash;
 }
 
@@ -31,5 +34,7 @@ uint32_t jenkins_one_at_a_time_hash(map_key_t map_key) {
  * in the self parameter.
  */
 int get_index(hashmap_t *self, map_key_t key) {
+    printf("hash: %d\n", self->hash_function(key) % self->capacity);
     return self->hash_function(key) % self->capacity;
 }
+

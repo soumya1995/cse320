@@ -23,6 +23,7 @@
  */
 /* $begin csapp.c */
 #include "csapp.h"
+void run2();
 
 /**************************
  * Error-handling functions
@@ -747,8 +748,15 @@ void V(sem_t *sem)
  * rio_readn - Robustly read n bytes (unbuffered)
  */
 /* $begin rio_readn */
+
+void run2(){
+
+}
+
 ssize_t rio_readn(int fd, void *usrbuf, size_t n)
 {
+
+
     size_t nleft = n;
     ssize_t nread;
     char *bufp = usrbuf;
@@ -901,8 +909,11 @@ ssize_t Rio_readn(int fd, void *ptr, size_t nbytes)
 {
     ssize_t n;
 
-    if ((n = rio_readn(fd, ptr, nbytes)) < 0)
-    unix_error("Rio_readn error");
+    if ((n = rio_readn(fd, ptr, nbytes)) < 0){
+        run2();
+        unix_error("Rio_readn error");
+    }
+
     return n;
 }
 

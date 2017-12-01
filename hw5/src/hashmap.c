@@ -51,6 +51,10 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
 
     if(self == NULL || self->invalid == true || key.key_base == NULL || key.key_len == 0 || val.val_base == NULL || val.val_len == 0){
         errno = EINVAL;
+
+        if(pthread_mutex_unlock(&self->write_lock) != 0) /*UNLOCK THE BUFFER*/
+        abort();
+
         return false;
     }
 
@@ -130,6 +134,20 @@ map_val_t get(hashmap_t *self, map_key_t key) {
         /*ERROR CASE*/
     if(self == NULL || self->invalid == true || key.key_base == NULL || key.key_len == 0){
         errno = EINVAL;
+
+        if(pthread_mutex_lock(&self->fields_lock) != 0) /*LOCK THE FIELDS*/
+        abort();
+
+        self->num_readers--;
+        if(self->num_readers == 0){
+
+        if(pthread_mutex_unlock(&self->write_lock) != 0) /*UNLOCK THE BUFFER*/
+            abort();
+        }
+
+        if(pthread_mutex_unlock(&self->fields_lock)!= 0) /*UNLOCK THE FIELDS*/
+            abort();
+
         return MAP_VAL(NULL, 0);
     }
 
@@ -162,6 +180,9 @@ map_val_t get(hashmap_t *self, map_key_t key) {
             node = ((self->nodes)+index);
         }
     }
+
+    if(node->tombstone == true) /*IF TOMBSTONE IS SET; THE NODE HAS BEEN DELETED*/
+        value = MAP_VAL(NULL, 0);
 
     if(flag != 1) /*key not found*/
         value = MAP_VAL(NULL, 0);
@@ -273,26 +294,25 @@ bool clear_map(hashmap_t *self) {
     if(pthread_mutex_lock(&self->write_lock) != 0) /*LOCK THE BUFFER*/
         abort();
 
-    if(pthread_mutex_lock(&self->fields_lock) != 0) /*LOCK THE FIELDS*/
-        abort();
 
     if(self == NULL || self->invalid == true){
-
         errno = EINVAL;
         return false;
+        if(pthread_mutex_unlock(&self->write_lock) != 0) /*UNLOCK THE BUFFER*/
+        abort();
     }
 
     map_node_t *node = self->nodes;
 
-    for(int i=0; i< self->size; i++){
+    for(int i=0; i< self->capacity; i++){ /*SEARCH THE FULL MAP; A KEY COULD BE PRESENT ANYWHERE*/
 
-        (self->destroy_function)((node+i)->key, (node+i)->val);
+        if(((node+i)->key).key_base != NULL) /*IF THE KEY EXISTS; IF THE KEY_BASE POINTS TO SOME KEY*/
+            (self->destroy_function)((node+i)->key, (node+i)->val);
+
     }
 
     self->size = 0; /*RESET SIZE TOO ZERO SINCE THE MAP IS EMPTY*/
 
-    if(pthread_mutex_unlock(&self->fields_lock) != 0) /*UNLOCK THE FIELDS*/
-        abort();
 
     if(pthread_mutex_unlock(&self->write_lock) != 0) /*UNLOCK THE BUFFER*/
         abort();

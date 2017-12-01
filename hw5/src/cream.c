@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-#include "server.h"
+#include <fcntl.h>
 
 bool isOnlyDigits(char *digit);
 void parseline(int argc, char *argv[]);
@@ -24,7 +24,6 @@ hashmap_t *hashmap;
 
 int main(int argc, char *argv[]) {
 
-    printf("ret\n");
     int serverfd, clientfd;
 
     /*PARSE THE COMMAND LINE TO GET ARGUMENTS*/
@@ -46,16 +45,17 @@ int main(int argc, char *argv[]) {
 
     serverfd = open_listenfd(port);
 
-    printf("\n \n                                                                         *****************************************************\n\n\n \n                                                                         *******************SERVER STARTED*********************\n\n\n \n                                                                         ******************************************************\n\n" );
-
 
     /*LISTEN INFINETLY FOR CONNECTIONS*/
     while(1){
 
-
             clientfd = Accept(serverfd, NULL, NULL);
-            enqueue(service_queue, (void*)&clientfd);
+            printf("clientfd(main): %d\n", clientfd);
 
+            int *fd = calloc(1, sizeof(clientfd));
+            *fd = clientfd;
+
+            enqueue(service_queue, fd);
 
     }
 
@@ -64,15 +64,21 @@ int main(int argc, char *argv[]) {
     exit(0);
 }
 
+/*void close_clientfd(int *clientfd){
+
+    Close(*clientfd);
+    free(clientfd);
+}*/
+
 void *start(void* s){
 
     while(1){
 
-        int clientfd = *((int*)dequeue(service_queue));
-        //char *buff = "8";
-        //Rio_writen(clientfd, &buff, sizeof(buff));
-        //printf("xxxxxxxxxxx\n");
-        serviceHandler(clientfd);
+        //printf("clientfd(start): %d\n", clientfd);
+        int *clientfd = ((int*)dequeue(service_queue));
+        int fd = *clientfd;
+        free(clientfd);
+        serviceHandler(fd);
     }
 
     return NULL;
@@ -85,15 +91,15 @@ void *serviceHandler(int clientfd){
     request_header_t request_header;
     response_header_t response_header;
 
+    printf("service: %d %d\n",clientfd, fcntl(clientfd, F_GETFD));
+
     Rio_readn(clientfd, &request_header, sizeof(request_header));
     if(request_header.request_code == PUT){
         if(request_header.key_size < MIN_KEY_SIZE || request_header.key_size > MAX_KEY_SIZE || request_header.value_size < MIN_VALUE_SIZE || request_header.value_size > MAX_VALUE_SIZE)
             goto bad;
         //KEY AND VALUE ARE VALID
         handle_put(clientfd, request_header);
-        printf("vvvvv\n");
         Close(clientfd);
-        printf("bye\n");
         return NULL;
     }
 
@@ -102,6 +108,7 @@ void *serviceHandler(int clientfd){
             goto bad;
 
         //KEY IS VALID/
+        printf("now\n");
         handle_get(clientfd, request_header);
         Close(clientfd);
         return NULL;
@@ -127,7 +134,6 @@ void *serviceHandler(int clientfd){
     bad:
     /*BAD REQUEST*/
 
-
     response_header.response_code = UNSUPPORTED;
     response_header.value_size = 0;
 
@@ -148,6 +154,7 @@ void handle_put(int clientfd, request_header_t request_header){
     memset(key_base, 0, request_header.key_size);
     memset(value_base, 0, request_header.value_size);
 
+    printf("put %d\n", clientfd);
     Rio_readn(clientfd, key_base, request_header.key_size);
     Rio_readn(clientfd, value_base, request_header.value_size);
 
@@ -170,29 +177,31 @@ void handle_put(int clientfd, request_header_t request_header){
     response_header_t response_header;
     if(flag == true){
         response_header.response_code = OK;
-        request_header.value_size = request_header.value_size;
+        response_header.value_size = request_header.value_size;
     }
     else{
         response_header.response_code = BAD_REQUEST;
         response_header.value_size = 0;
     }
-    printf("%d\n",clientfd );
+
     /*WRITE TO THE SOCKET*/
     Rio_writen(clientfd, &response_header, sizeof(response_header));
-    printf("xxxxxxxxxxxxxx\n");
+    /*WE DON'T NEED TO FREE KEY_BASE AND VAUE_BASE; KEY AND VALUE ARE BEING PUT IN THE MAP*/
+    printf("ret exit\n");
     return;
 }
 
 void handle_get(int clientfd, request_header_t request_header){
 
-    char key_base[request_header.key_size];
-    char value_base[request_header.value_size]; //DON'T USE THIS VALUE
+    char *key_base = calloc(1, request_header.key_size);
+    char *value_base = calloc(1, request_header.value_size); //DON'T USE THIS VALUE
 
-    memset(&key_base, 0, sizeof(key_base));
-    memset(&value_base, 0, sizeof(value_base));
+    memset(key_base, 0, request_header.key_size);
+    memset(value_base, 0, request_header.value_size);
 
-    Rio_readn(clientfd, &key_base, request_header.key_size);
-    Rio_readn(clientfd, &value_base, request_header.value_size);
+    printf("get: %d\n", clientfd);
+    Rio_readn(clientfd, key_base, request_header.key_size);
+    Rio_readn(clientfd, value_base, request_header.value_size);
 
     map_key_t key;
     key.key_base = key_base;
@@ -215,26 +224,33 @@ void handle_get(int clientfd, request_header_t request_header){
     /*WRITE TO THE SOCKET*/
     Rio_writen(clientfd, &response_header, sizeof(response_header));
     Rio_writen(clientfd, value.val_base, response_header.value_size);
+
+    /*NEED TO FREE KEY_BASE AND VALUE_BASE*/
+    free(key_base);
+    free(value_base);
+
+    return;
 }
 
 void handle_evict(int clientfd, request_header_t request_header){
 
-    char key_base[request_header.key_size];
-    char value_base[request_header.value_size]; //DON'T USE THIS VALUE
+    char *key_base = calloc(1, request_header.key_size);
+    char *value_base = calloc(1, request_header.value_size); //DON'T USE THIS VALUE
 
-    memset(&key_base, 0, sizeof(key_base));
-    memset(&value_base, 0, sizeof(value_base));
+    memset(key_base, 0, request_header.key_size);
+    memset(value_base, 0, request_header.value_size);
 
-    Rio_readn(clientfd, &key_base, request_header.key_size);
-    Rio_readn(clientfd, &value_base, request_header.value_size);
+    Rio_readn(clientfd, key_base, request_header.key_size);
+    Rio_readn(clientfd, value_base, request_header.value_size);
 
     map_key_t key;
     key.key_base = key_base;
     key.key_len = request_header.key_size;
 
-    map_node_t node = delete(hashmap, key);
+    //map_node_t node;
+    delete(hashmap, key);
 
-    hashmap->destroy_function(node.key, node.val);
+    //hashmap->destroy_function(node.key, node.val);
 
     /*MAKE THE RESPONSE HEADER*/
     response_header_t response_header;
@@ -245,13 +261,33 @@ void handle_evict(int clientfd, request_header_t request_header){
     /*WRITE TO THE SOCKET*/
     Rio_writen(clientfd, &response_header, sizeof(response_header));
 
+    /*NEED TO FREE KEY_BASE AND VALUE_BASE*/
+    free(key_base);
+    free(value_base);
+
     return;
 
 }
 
 void handle_clear(int clientfd){
 
+    bool flag = clear_map(hashmap);
 
+    /*MAKE THE RESPONSE HEADER*/
+    response_header_t response_header;
+    if(flag == true){
+        response_header.response_code = OK;
+        response_header.value_size = 0;
+    }
+    else{
+        response_header.response_code = BAD_REQUEST;
+        response_header.value_size = 0;
+    }
+
+    /*WRITE TO THE SOCKET*/
+    Rio_writen(clientfd, &response_header, sizeof(response_header));
+
+    return;
 }
 
 void destroy_function(map_key_t key, map_val_t val){

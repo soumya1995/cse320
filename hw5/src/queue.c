@@ -5,7 +5,7 @@ queue_t *create_queue(void) {
 
     queue_t *queue;
 
-    if((queue = (queue_t*)calloc(sizeof(queue_t), sizeof(queue_t))) == NULL)
+    if((queue = (queue_t*)calloc(1, sizeof(queue_t))) == NULL)
         return NULL;
 
     queue->front = queue->rear = NULL;
@@ -60,20 +60,23 @@ bool enqueue(queue_t *self, void *item) {
         return false;
     }
 
-    if(self->invalid == true)
-        return NULL;
 
 
     queue_node_t *node;
 
+
     /*MAKE A NEW NODE */
-    node = (queue_node_t*)calloc(sizeof(queue_node_t), sizeof(queue_node_t));
+    node = (queue_node_t*)calloc(1, sizeof(queue_node_t));
     node->item = item;
     node->next = NULL;
 
     if(pthread_mutex_lock(&self->lock) !=0 ) /*LOCK THE BUFFER*/
         return false;
 
+    if(self->invalid == true){
+        free(node);
+        return NULL;
+    }
 
     if(self->rear == NULL){ /*ADDING THE FIRST NODE*/
 
@@ -104,13 +107,14 @@ void *dequeue(queue_t *self) {
         return NULL;
     }
 
-    if(self->invalid == true)
-        return NULL;
 
     if(sem_wait(&self->items) < 0) /*WAIT FOR AVAILABLE ITEM*/
         return NULL;
 
     if(pthread_mutex_lock(&self->lock) != 0) /*LOCK THE BUFFER*/
+        return NULL;
+
+    if(self->invalid == true)
         return NULL;
 
     if(self->front == NULL)
