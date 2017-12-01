@@ -14,7 +14,7 @@ hashmap_t *create_map(uint32_t capacity, hash_func_f hash_function, destructor_f
 
     hashmap_t *hashmap;
 
-    if(capacity < 0 || hash_function == NULL || destroy_function == NULL){
+    if(capacity <= 0 || hash_function == NULL || destroy_function == NULL){
 
         errno = EINVAL;
         return NULL;
@@ -84,14 +84,14 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
                 node = ((self->nodes)+index);
             }
 
-            self->destroy_function(node->key, node->val); /*USE THE DESTROY_FUNCTION WHEN A NODE IS EVICTED*/
+            //self->destroy_function(node->key, node->val); /*USE THE DESTROY_FUNCTION WHEN A NODE IS EVICTED*/
             self->size--;
         }
     }
 
     if(self->size == self->capacity && force == true){ /*map is full  & force is true; overwrite the value at node supplied by get_index()*/
 
-        self->destroy_function(node->key, node->val); /*USE THE DESTROY_FUNCTION WHEN A NODE IS EVICTED*/
+        //self->destroy_function(node->key, node->val); /*USE THE DESTROY_FUNCTION WHEN A NODE IS EVICTED*/
         self->size--;
     }
 
@@ -100,7 +100,6 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
     node->val = val;
     node->tombstone = false;
     self->size = self->size + 1;
-
 
 
 
@@ -150,6 +149,7 @@ map_val_t get(hashmap_t *self, map_key_t key) {
 
         return MAP_VAL(NULL, 0);
     }
+
 
     int index = get_index(self, key);
     map_val_t value;
@@ -233,11 +233,16 @@ map_node_t delete(hashmap_t *self, map_key_t key) {
 
     else{ /*key exists*/
             map_node_t *node= ((self->nodes)+index);
-            node->tombstone = true;
-            node_return = node;
 
+            if(node->tombstone != true){ /*CHECK IF THIS NODE HAS ALREDAY BEEN DELETED; IF ALREADY DELTED RETURN NULL NODE*/
+                node->tombstone = true;
+                self->size--;
+                node_return = node;
+            }
 
-            self->size--;
+            else
+                node_return = &MAP_NODE(MAP_KEY(NULL, 0), MAP_VAL(NULL, 0), false);
+
         }
 
 
@@ -252,7 +257,7 @@ int key_exists(hashmap_t *self, map_key_t key){
 
 
     int index = get_index(self, key);
-    map_val_t value;
+   // map_val_t value;
     int flag = 0;
     int index_cpy = index; /*THIS IS TO KEEP TRACK IF WE WENT AROUND THE ARRAY TO THE INDEX WE STARTED WITH*/
 
@@ -260,7 +265,7 @@ int key_exists(hashmap_t *self, map_key_t key){
 
     if(memcmp((node->key).key_base, key.key_base, (node->key).key_len) == 0) /*key found at the index given by get_index()*/{
         flag = 1;
-        value = node->val;
+        //value = node->val;
     }
 
     else{
@@ -271,7 +276,7 @@ int key_exists(hashmap_t *self, map_key_t key){
 
             if(memcmp((node->key).key_base, key.key_base, (node->key).key_len) == 0){
                 flag = 1;
-                value = node->val;
+                //value = node->val;
                 break;
             }
 
@@ -281,10 +286,8 @@ int key_exists(hashmap_t *self, map_key_t key){
     }
 
     if(flag != 1) /*key not found*/
-        value = MAP_VAL(NULL, 0);
-
-    if(value.val_base == NULL && value.val_len == 0)
         return -1;
+
 
     return index;
 }
@@ -303,11 +306,12 @@ bool clear_map(hashmap_t *self) {
     }
 
     map_node_t *node = self->nodes;
-
     for(int i=0; i< self->capacity; i++){ /*SEARCH THE FULL MAP; A KEY COULD BE PRESENT ANYWHERE*/
 
-        if(((node+i)->key).key_base != NULL) /*IF THE KEY EXISTS; IF THE KEY_BASE POINTS TO SOME KEY*/
+        if(((node+i)->key).key_base != NULL && self->size !=0 && ((node+i)->tombstone) != true) /*IF THE KEY EXISTS; IF THE KEY_BASE POINTS TO SOME KEY AND THE MAP HASN'T BEEN CLEARED BEFORE I.E. THE SIZE OF THE MAP IS NOT ZERO AND THE CURRENT NODE HASN'T BEEN DELETED I.E. A TOMBSTONE HAS NOT BEEN SET; BECAUSE THE CREAM SERVER FREES THE KEY_BASE AND VAL_BASE*/{
+
             (self->destroy_function)((node+i)->key, (node+i)->val);
+        }
 
     }
 

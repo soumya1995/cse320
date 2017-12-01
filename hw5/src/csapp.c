@@ -910,7 +910,6 @@ ssize_t Rio_readn(int fd, void *ptr, size_t nbytes)
     ssize_t n;
 
     if ((n = rio_readn(fd, ptr, nbytes)) < 0){
-        run2();
         unix_error("Rio_readn error");
     }
 

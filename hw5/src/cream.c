@@ -26,6 +26,8 @@ int main(int argc, char *argv[]) {
 
     int serverfd, clientfd;
 
+    signal(SIGPIPE, SIG_IGN);
+
     /*PARSE THE COMMAND LINE TO GET ARGUMENTS*/
     parseline(argc, argv);
 
@@ -33,7 +35,11 @@ int main(int argc, char *argv[]) {
     service_queue = create_queue();
 
     /*INITIALIZE THE HASH MAP*/
-    hashmap = create_map(max_entries, jenkins_one_at_a_time_hash, destroy_function);
+    if((hashmap = create_map(max_entries, jenkins_one_at_a_time_hash, destroy_function)) == NULL){
+        printf("Size of map should be greater than zero\n");
+        exit(0);
+    }
+
 
     /*SPAWN THE THREADS*/
     pthread_t thread_ids[num_workers];
@@ -50,7 +56,6 @@ int main(int argc, char *argv[]) {
     while(1){
 
             clientfd = Accept(serverfd, NULL, NULL);
-            printf("clientfd(main): %d\n", clientfd);
 
             int *fd = calloc(1, sizeof(clientfd));
             *fd = clientfd;
@@ -64,17 +69,12 @@ int main(int argc, char *argv[]) {
     exit(0);
 }
 
-/*void close_clientfd(int *clientfd){
 
-    Close(*clientfd);
-    free(clientfd);
-}*/
 
 void *start(void* s){
 
     while(1){
 
-        //printf("clientfd(start): %d\n", clientfd);
         int *clientfd = ((int*)dequeue(service_queue));
         int fd = *clientfd;
         free(clientfd);
@@ -91,7 +91,6 @@ void *serviceHandler(int clientfd){
     request_header_t request_header;
     response_header_t response_header;
 
-    printf("service: %d %d\n",clientfd, fcntl(clientfd, F_GETFD));
 
     Rio_readn(clientfd, &request_header, sizeof(request_header));
     if(request_header.request_code == PUT){
@@ -108,7 +107,6 @@ void *serviceHandler(int clientfd){
             goto bad;
 
         //KEY IS VALID/
-        printf("now\n");
         handle_get(clientfd, request_header);
         Close(clientfd);
         return NULL;
@@ -154,7 +152,6 @@ void handle_put(int clientfd, request_header_t request_header){
     memset(key_base, 0, request_header.key_size);
     memset(value_base, 0, request_header.value_size);
 
-    printf("put %d\n", clientfd);
     Rio_readn(clientfd, key_base, request_header.key_size);
     Rio_readn(clientfd, value_base, request_header.value_size);
 
@@ -166,12 +163,10 @@ void handle_put(int clientfd, request_header_t request_header){
     map_val_t val;
     val.val_base = value_base;
     val.val_len = request_header.value_size;
-    //printf("size: %d\n", request_header.value_size);
 
     /*PUT THE KEY AND VALUE IN THE MAP*/
     bool flag = put(hashmap, key, val, false);
 
-    //printf("keyyyyyyyyyy: %s \n", (char*)((hashmap->nodes+10)->key).key_base);
 
     /*MAKE THE RESPONSE HEADER*/
     response_header_t response_header;
@@ -187,7 +182,6 @@ void handle_put(int clientfd, request_header_t request_header){
     /*WRITE TO THE SOCKET*/
     Rio_writen(clientfd, &response_header, sizeof(response_header));
     /*WE DON'T NEED TO FREE KEY_BASE AND VAUE_BASE; KEY AND VALUE ARE BEING PUT IN THE MAP*/
-    printf("ret exit\n");
     return;
 }
 
@@ -199,7 +193,6 @@ void handle_get(int clientfd, request_header_t request_header){
     memset(key_base, 0, request_header.key_size);
     memset(value_base, 0, request_header.value_size);
 
-    printf("get: %d\n", clientfd);
     Rio_readn(clientfd, key_base, request_header.key_size);
     Rio_readn(clientfd, value_base, request_header.value_size);
 
@@ -247,10 +240,10 @@ void handle_evict(int clientfd, request_header_t request_header){
     key.key_base = key_base;
     key.key_len = request_header.key_size;
 
-    //map_node_t node;
-    delete(hashmap, key);
+    map_node_t node = delete(hashmap, key);
 
-    //hashmap->destroy_function(node.key, node.val);
+    if((node.key).key_base != NULL) /*CHECK TO SEE IF THIS AN ALREADY DELETED NODE; THEN DON'T FREE IT AGAIN*/
+        hashmap->destroy_function(node.key, node.val);
 
     /*MAKE THE RESPONSE HEADER*/
     response_header_t response_header;
@@ -367,9 +360,6 @@ void parseline(int argc, char *argv[]){
          exit(EXIT_FAILURE);
     }
 
-    /*printf("num_workers: %d\n", num_workers);
-    printf("port: %s\n", port);
-    printf("max_entries %d\n",max_entries );*/
 
     return;
 }
