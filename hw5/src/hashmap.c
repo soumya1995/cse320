@@ -263,25 +263,29 @@ int key_exists(hashmap_t *self, map_key_t key){
 
     map_node_t *node= ((self->nodes)+index);
 
-    if(memcmp((node->key).key_base, key.key_base, (node->key).key_len) == 0) /*key found at the index given by get_index()*/{
-        flag = 1;
-        //value = node->val;
-    }
 
-    else{
+    if(node->tombstone != true && self->size != 0){
+        if(memcmp((node->key).key_base, key.key_base, (node->key).key_len) == 0) /*key found at the index given by get_index()*/{
+            flag = 1;
+            //value = node->val;
+        }
 
-        index++;
-        node = ((self->nodes)+index);
-        while(index!=index_cpy){
 
-            if(memcmp((node->key).key_base, key.key_base, (node->key).key_len) == 0){
-                flag = 1;
-                //value = node->val;
-                break;
-            }
+        else{
 
-            index = (index+1)%self->capacity;
+            index++;
             node = ((self->nodes)+index);
+            while(index!=index_cpy){
+
+                if(memcmp((node->key).key_base, key.key_base, (node->key).key_len) == 0){
+                    flag = 1;
+                    //value = node->val;
+                    break;
+                }
+
+                index = (index+1)%self->capacity;
+                node = ((self->nodes)+index);
+            }
         }
     }
 
