@@ -1,0 +1,20 @@
+Test Case,Points Possible,Points Earned,Notes
+105_sfish_prompt,2,2,
+205_long_running_exec,5,5,
+318_long_running_pipe,3,0,no output
+400_ctrl_c,4,4,
+401_ctrl_z,4,4,
+402_jobs_builtin,4,4,
+403_fg_builtin,4,4,
+404_kill_jid_builtin,4,4,
+405_kill_pid_builtin,4,0,output: '5476: No such process' (Note: 5476 is the argument pid)
+500_color_builtin,3,0,
+501_right_prompt_part_1,10,0,
+502_right_prompt_part_2,10,0,
+503_git_prompt,2,0,
+602_background_proc,2,0,program did not run in the background
+603_ctrl_c_piped,2,0,
+604_ctrl_z_piped,2,0,
+605_jobs_builtin_piped,2,0,
+606_fg_builtin_piped,2,0,
+607_kill_jid_builtin_piped,2,0,
